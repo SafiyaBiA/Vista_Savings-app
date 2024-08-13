@@ -1,71 +1,27 @@
-// ignore_for_file: prefer_const_constructors, must_be_immutable, use_key_in_widget_constructors
-
+import 'package:auth_firebase/firebase_options.dart';
+import 'package:auth_firebase/pages/login/login.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'pages/signup/signup.dart';
 
-import 'mainPages/AccountPage.dart';
-import 'mainPages/HomePage.dart';
-import 'mainPages/transactionsPage.dart';
-import 'mainPages/upcomingTransactionsPage.dart';
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+  );
+  
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.lightGreen,
-      ),
-      home: HomeNavigationPage(0),
+      home: Login()
     );
-  }
-}
-
-class HomeNavigationPage extends StatefulWidget {
-  HomeNavigationPage(this.currentIndex);
-  int currentIndex;
-
-  @override
-  State<HomeNavigationPage> createState() => _HomeNavigationPageState();
-}
-
-class _HomeNavigationPageState extends State<HomeNavigationPage> {
-  final screens = [
-    HomePage(),
-    TransactionPage(),
-    PastTransactionsPage(),
-    AccountPage(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        body: IndexedStack(
-          index: widget.currentIndex,
-          children: screens,
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          unselectedItemColor: Colors.grey,
-          selectedItemColor: Colors.greenAccent,
-          currentIndex: widget.currentIndex,
-          onTap: (index) => setState(() {
-            widget.currentIndex = index;
-          }),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.money), label: "Upcoming"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.credit_card), label: "Past"),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-          ],
-        ));
   }
 }
