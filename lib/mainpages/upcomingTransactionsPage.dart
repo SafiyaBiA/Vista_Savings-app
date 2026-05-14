@@ -1,9 +1,7 @@
-// ignore_for_file: file_names, avoid_unnecessary_containers, use_key_in_widget_constructors
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import '../lists.dart';
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({Key? key}) : super(key: key);
@@ -22,45 +20,68 @@ class _TransactionPageState extends State<TransactionPage> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: (Container(child: const PastTransactionsList())),
+      body: const UpcomingTransactionsList(),
     );
   }
 }
 
-class PastTransactionsList extends StatefulWidget {
-  const PastTransactionsList();
+class UpcomingTransactionsList extends StatelessWidget {
+  const UpcomingTransactionsList({super.key});
 
-  @override
-  State<PastTransactionsList> createState() => _PastTransactionsListListState();
-}
-
-class _PastTransactionsListListState extends State<PastTransactionsList> {
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: false,
-        scrollDirection: Axis.vertical,
-        itemCount: upcomingTransactions.length - 1,
-        itemBuilder: (context, int index) {
-          return SizedBox(
-            width: MediaQuery.of(context).size.width * 0.9,
-            child: ListTile(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: Colors.greenAccent, width: 0.25),
-                borderRadius: BorderRadius.circular(10),
+    final user = FirebaseAuth.instance.currentUser;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .collection('upcoming_transactions')
+          .orderBy('date', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No upcoming transactions found."));
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final date = (data['date'] as Timestamp).toDate();
+            final amount = data['amount'] ?? "0.00";
+            final category = data['category'] ?? "Other";
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: Colors.greenAccent, width: 0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orangeAccent,
+                  child: Icon(Icons.calendar_today, color: Colors.white),
+                ),
+                title: Text(
+                  "₹$amount",
+                  style: const TextStyle(
+                      color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(category),
+                trailing: Text(DateFormat.yMMMd().format(date)),
               ),
-              leading: upcomingTransactions[index][0],
-              title: Text(
-                upcomingTransactions[index][1],
-                style: const TextStyle(color: Colors.greenAccent),
-              ),
-              subtitle: Text(upcomingTransactions[index][3]),
-              trailing: Text(DateFormat.MMMMEEEEd()
-                  .format(upcomingTransactions[index][2])
-                  .toString()),
-            ),
-          );
-        });
+            );
+          },
+        );
+      },
+    );
   }
 }

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import '../pages/home/home.dart';
+import '../pages/home/main_navigation.dart';
 import '../pages/login/login.dart';
 
 class AuthService {
@@ -24,7 +24,7 @@ class AuthService {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => const Home()
+          builder: (BuildContext context) => const MainNavigation()
         )
       );
       
@@ -43,9 +43,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.0,
       );
-    }
-    catch(e){
-
     }
 
   }
@@ -67,7 +64,7 @@ class AuthService {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) => const Home()
+          builder: (BuildContext context) => const MainNavigation()
         )
       );
       
@@ -86,9 +83,6 @@ class AuthService {
         textColor: Colors.white,
         fontSize: 14.0,
       );
-    }
-    catch(e){
-
     }
 
   }

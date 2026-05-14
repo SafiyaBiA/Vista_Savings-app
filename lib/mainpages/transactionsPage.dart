@@ -1,9 +1,7 @@
-// ignore_for_file: file_names, prefer_const_constructors, duplicate_ignore, avoid_unnecessary_containers, use_key_in_widget_constructors
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import '../lists.dart';
 
 class PastTransactionsPage extends StatefulWidget {
   const PastTransactionsPage({Key? key}) : super(key: key);
@@ -17,52 +15,73 @@ class _PastTransactionsPageState extends State<PastTransactionsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // ignore: prefer_const_constructors
-        title: Text(
+        title: const Text(
           "Past Transactions",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: (Container(child: UpcomingTransactionsList())),
+      body: const PastTransactionsList(),
     );
   }
 }
 
-class UpcomingTransactionsList extends StatefulWidget {
-  const UpcomingTransactionsList();
+class PastTransactionsList extends StatelessWidget {
+  const PastTransactionsList({super.key});
 
-  @override
-  State<UpcomingTransactionsList> createState() =>
-      _UpcomingTransactionsListState();
-}
-
-class _UpcomingTransactionsListState extends State<UpcomingTransactionsList> {
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: false,
-        scrollDirection: Axis.vertical,
-        itemCount: pastTransactions.length,
-        itemBuilder: (context, int index) {
-          return SizedBox(
-            width: MediaQuery.of(context).size.width * 0.9,
-            child: ListTile(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: Colors.greenAccent, width: 0.25),
-                borderRadius: BorderRadius.circular(10),
+    final user = FirebaseAuth.instance.currentUser;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .collection('past_transactions')
+          .orderBy('date', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No past transactions found."));
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final date = (data['date'] as Timestamp).toDate();
+            final amount = data['amount'] ?? "0.00";
+            final category = data['category'] ?? "Other";
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: Colors.greenAccent, width: 0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.blueAccent,
+                  child: Icon(Icons.money, color: Colors.white),
+                ),
+                title: Text(
+                  "₹$amount",
+                  style: const TextStyle(
+                      color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(category),
+                trailing: Text(DateFormat.yMMMd().format(date)),
               ),
-              leading: pastTransactions[index][0],
-              title: Text(
-                pastTransactions[index][1],
-                style: TextStyle(color: Colors.greenAccent),
-              ),
-              subtitle: Text(pastTransactions[index][3]),
-              trailing: Text(DateFormat.MMMMEEEEd()
-                  .format(pastTransactions[index][2])
-                  .toString()),
-            ),
-          );
-        });
+            );
+          },
+        );
+      },
+    );
   }
 }
